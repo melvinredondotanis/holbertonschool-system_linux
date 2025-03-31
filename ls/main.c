@@ -18,9 +18,8 @@ int main(void)
 	{
 		if (_strcmp(read->d_name, ".") == 0 || _strcmp(read->d_name, "..") == 0)
 			continue;
-		printf(" %s", read->d_name);
+		printf("%s\n", read->d_name);
 	}
-	printf("\n");
 	closedir(dir);
 
 	return (0);
