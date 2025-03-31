@@ -9,17 +9,24 @@ int main(void)
 {
 	DIR *dir;
 	struct dirent *read;
+	short first_entry;
 
 	dir = opendir(".");
 	if (dir == NULL)
 		return (1);
 
+	first_entry = 1;
 	while ((read = readdir(dir)) != NULL)
 	{
 		if (_strcmp(read->d_name, ".") == 0 || _strcmp(read->d_name, "..") == 0)
 			continue;
-		printf("%s\n", read->d_name);
+
+		if (!first_entry)
+			printf(" ");
+		printf("%s", read->d_name);
+		first_entry = 0;
 	}
+	printf("\n");
 	closedir(dir);
 
 	return (0);
