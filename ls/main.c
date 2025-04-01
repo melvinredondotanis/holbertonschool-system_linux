@@ -9,7 +9,7 @@ int main(void)
 {
 	DIR *dir;
 	struct dirent *read;
-	short first_entry;
+	int first_entry;
 
 	dir = opendir(".");
 	if (dir == NULL)
