@@ -1,35 +1,18 @@
 #include "hls.h"
 
 /**
- * main - Main function of hls
+ * main - Entry point for the program
+ * @argc: Number of command line arguments
+ * @argv: Array of command line arguments
  *
- * Return: 0 on success, 1 on failure
+ * Return: 0 on success, error will exit with value of 2
  */
-int main(void)
+int main(int argc, char **argv)
 {
-	DIR *dir;
-	struct dirent *read;
-	int first_entry;
+	short status;
+	(void) argc;
 
-	dir = opendir(".");
-	if (dir == NULL)
-		return (1);
-
-	first_entry = 1;
-	while ((read = readdir(dir)) != NULL)
-	{
-		if (_strcmp(read->d_name, ".") == 0 || _strcmp(read->d_name, "..") == 0)
-			continue;
-		else if (read->d_name[0] == '.')
-			continue;
-
-		if (!first_entry)
-			printf(" ");
-		printf("%s", read->d_name);
-		first_entry = 0;
-	}
-	printf("\n");
-	closedir(dir);
-
-	return (0);
+	status = 0;
+	status = ls(argv);
+	return (status);
 }
