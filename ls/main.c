@@ -20,6 +20,8 @@ int main(void)
 	{
 		if (_strcmp(read->d_name, ".") == 0 || _strcmp(read->d_name, "..") == 0)
 			continue;
+		else if (read->d_name[0] == '.')
+			continue;
 
 		if (!first_entry)
 			printf(" ");
