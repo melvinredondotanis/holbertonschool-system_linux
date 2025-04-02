@@ -1,10 +1,10 @@
 #ifndef HLS_H
 #define HLS_H
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /**
  * struct content - stores entry information
@@ -55,6 +55,10 @@ typedef struct option
 } option;
 
 /* Strings */
-int _strcmp(char *s1, char *s2);
+void *_memcpy(void *dest, const void *src, size_t n);
+size_t _strlen(const char *s);
+int _strcmp(const char *s1, const char *s2);
+char *_strcpy(char *dest, const char *src);
+char *str_toupper(char *str);
 
 #endif /* HLS_H */
