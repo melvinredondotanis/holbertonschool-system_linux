@@ -17,3 +17,19 @@ char *_memcpy(char *dest, char *src, size_t n)
 
 	return (dest);
 }
+
+/**
+ * cleanup - frees memory
+ * @entries: pointer to content entries
+ * @dirs: pointer to content directories
+ * @opt: pointer to options struct
+ */
+void cleanup(content *entries, content *dirs, option *opt)
+{
+	if (entries)
+		free(entries);
+	if (dirs)
+		free(dirs);
+	if (opt)
+		free(opt);
+}
