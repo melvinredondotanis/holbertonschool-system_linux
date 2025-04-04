@@ -58,6 +58,7 @@ struct options
 /* strings */
 size_t				_strlen(const char *str);
 char				*_strcpy(char *dest, const char *src);
+int					_strcmp(const char *s1, const char *s2);
 
 /* hls */
 void				list_files(const char *path, const char *program_name, int num_args,
@@ -67,5 +68,12 @@ void				list_files(const char *path, const char *program_name, int num_args,
 void				add_entry_to_list(struct entry_list *list, const char *name,
 								mode_t st_mode, int is_hidden);
 void				free_entry_list(struct entry_list *list);
-
+void				print_time(time_t mod_time);
+void				add_entry(struct entry_list *l, const char *n, mode_t st_m, int h);
+void				handle_list_output(struct entry_list *list, const char *path,
+						const char *pn, int opl, int detailed_listing);
+int					should_process_entry(const char *n,
+										int show_hidden, int show_almost_all);
+void				handle_detailed_listing(struct entry_list *list, const char *path,
+											const char *pn);
 #endif /* HLS_H */
