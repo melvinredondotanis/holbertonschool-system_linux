@@ -52,7 +52,7 @@ static int handle_regular_file(const char *path)
 	if (lstat(path, &file_stat) == 0 && S_ISREG(file_stat.st_mode))
 	{
 		printf("%s\n", path);
-		return (1);
+		return (2);
 	}
 	return (0);
 }
@@ -80,7 +80,7 @@ void handle_detailed_listing(struct entry_list *list, const char *path,
 		{
 			fprintf(stderr, "%s: cannot access %s/%s: ", pn, path, current->name);
 			perror("");
-			exit(EXIT_FAILURE);
+			exit(2);
 		}
 		current = current->next;
 	}
@@ -115,7 +115,7 @@ void list_files(const char *path, const char *pn, int num_args,
 		fprintf(stderr, "%s: cannot %s %s: ", pn,
 				(errno == EACCES) ? "open directory" : "access", path);
 		perror("");
-		exit(EXIT_FAILURE);
+		exit(2);
 	}
 	if (num_args > 2)
 		printf("%s:\n", path);
@@ -128,7 +128,7 @@ void list_files(const char *path, const char *pn, int num_args,
 		{
 			fprintf(stderr, "%s: cannot access %s/%s: ", pn, path, ent->d_name);
 			perror("");
-			exit(EXIT_FAILURE);
+			exit(2);
 		}
 		add_entry(list, ent->d_name, file_stat.st_mode, (ent->d_name[0] == '.'));
 	}

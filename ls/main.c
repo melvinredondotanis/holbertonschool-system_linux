@@ -34,7 +34,7 @@ static void parse_options(int *argc, char *argv[], struct options *options)
 				default:
 					fprintf(stderr, "%s: invalid option -- '%c'\n",
 							argv[0], argv[i][j]);
-					exit(EXIT_FAILURE);
+					exit(2);
 			}
 		}
 

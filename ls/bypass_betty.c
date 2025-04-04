@@ -69,7 +69,7 @@ void add_entry(struct entry_list *l, const char *n, mode_t st_m, int h)
 	if (new_entry == NULL)
 	{
 		perror("malloc");
-		exit(EXIT_FAILURE);
+		exit(2);
 	}
 
 	_strcpy(new_entry->name, n);
@@ -117,12 +117,12 @@ void handle_list_output(struct entry_list *list, const char *path,
 int should_process_entry(const char *n, int show_hidden, int show_almost_all)
 {
 	if (n[0] != '.')
-		return (1);
+		return (2);
 	if (show_hidden)
-		return (1);
+		return (2);
 	if (show_almost_all &&
 		_strcmp(n, ".") != 0 &&
 		_strcmp(n, "..") != 0)
-		return (1);
+		return (2);
 	return (0);
 }
