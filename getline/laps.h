@@ -7,7 +7,7 @@
 /**
  * struct cars - linked list to organize the race
  * @id: id of the car
- * @lap: current lap of the car
+ * @laps: current lap of the car
  * @next: next car node
  */
 typedef struct cars
