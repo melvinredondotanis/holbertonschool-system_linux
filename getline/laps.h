@@ -12,9 +12,9 @@
  */
 typedef struct cars
 {
-    int id;
-    size_t laps;
-    struct cars *next;
+	int id;
+	size_t laps;
+	struct cars *next;
 } cars;
 
 void race_state(int *id, size_t size);
