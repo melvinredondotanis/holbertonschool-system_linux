@@ -6,6 +6,7 @@
  * _getline - Reads a line from a file descriptor
  * @fd: The file descriptor to read from
  * Return: A pointer to the line read, or NULL on failure or EOF
+ * Note: When called with fd = -1, frees all resources and resets static vars
  */
 char *_getline(const int fd)
 {
@@ -14,6 +15,13 @@ char *_getline(const int fd)
 	char *line = NULL, *temp = NULL;
 	int line_size = 0, new_line_pos, i;
 
+	if (fd == -1)
+	{
+		buffer_pos = 0;
+		bytes_read = 0;
+		buffer[0] = '\0';
+		return (NULL);
+	}
 	if (fd < 0)
 		return (NULL);
 	while (1)
