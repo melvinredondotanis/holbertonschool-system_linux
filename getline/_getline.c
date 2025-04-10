@@ -43,7 +43,6 @@ fd_buffer_t *find_or_create_buffer(fd_buffer_t **head, const int fd)
 		current->fd = fd;
 		current->buffer_pos = 0;
 		current->bytes_read = 0;
-		current->buffer[0] = '\0';
 		current->next = NULL;
 
 		if (!*head)
@@ -69,7 +68,6 @@ int read_buffer(fd_buffer_t *current)
 			return (0);
 
 		current->buffer_pos = 0;
-		current->buffer[current->bytes_read] = '\0';
 	}
 	return (1);
 }
@@ -99,6 +97,7 @@ char *extract_line(fd_buffer_t *current, char *line, int *line_size)
 	}
 
 	line = temp;
+
 	for (i = 0; current->buffer_pos < new_line_pos; i++)
 		line[*line_size + i] = current->buffer[current->buffer_pos++];
 
@@ -147,6 +146,7 @@ char *_getline(const int fd)
 			return (NULL);
 
 		if (current->buffer_pos > 0 &&
+			current->buffer_pos <= current->bytes_read &&
 			current->buffer[current->buffer_pos - 1] == '\n')
 			return (line);
 	}
