@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """Script to find and replace a string in the heap of a process."""
 
 import os
@@ -9,10 +9,24 @@ def read_write_heap(pid, target_string, new_string):
     """
     Find and replace a string in the heap of a process.
 
+    This function accesses /proc/<pid>/maps to locate the heap segment
+    of a process, then reads the heap content from /proc/<pid>/mem.
+    It searches for all occurrences of the target string and replaces 
+    them with the new string (padding with null bytes if necessary).
+
     Args:
-        pid: Process ID
-        target_string: String to find in heap
-        new_string: Replacement string
+        pid (int): Process identifier of the target process
+        target_string (str): String to search for in the heap
+        new_string (str): String to replace the target with
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit: If not run with sudo permissions
+        SystemExit: If heap segment is not found
+        SystemExit: If target string is not found
+        SystemExit: If memory cannot be read or written
     """
     if os.geteuid() != 0:
         print('This script needs to be executed with sudo')
