@@ -38,9 +38,6 @@ def read_write_heap(pid, target_string, new_string):
     del tmp
     new_bytes = padded_new_string.encode('utf-8')
 
-    print(f'[*] maps: /proc/{pid}/maps')
-    print(f'[*] mem: /proc/{pid}/mem')
-
     try:
         heap_info = None
         with open(f'/proc/{pid}/maps', 'r') as maps_file:
@@ -56,14 +53,6 @@ def read_write_heap(pid, target_string, new_string):
         if not heap_info:
             print('[!] No heap found in process memory')
             sys.exit(1)
-
-        print('[*] Found [heap]:')
-        print('\tpathname = [heap]')
-        print(f'\taddresses = {start_addr}-{end_addr}')
-        print(f'\tpermissions = {heap_info.split()[1]}')
-        print(f'\toffset = {heap_info.split()[2]}')
-        print(f'\tinode = {heap_info.split()[3]}')
-        print(f'[*] Addr start [{hex(start)}] | end [{hex(end)}]')
 
     except Exception as e:
         print(f'Error while reading memory map: {e}')
@@ -90,7 +79,6 @@ def read_write_heap(pid, target_string, new_string):
                 sys.exit(1)
 
             address = occurrences[0]
-            print(f"[*] Found '{target_string}' at {hex(address)}")
 
     except Exception as e:
         print(f'Error while reading memory: {e}')
