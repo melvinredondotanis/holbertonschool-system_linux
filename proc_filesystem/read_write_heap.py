@@ -85,7 +85,6 @@ def read_write_heap(pid, target_string, new_string):
         sys.exit(1)
 
     try:
-        print(f"[*] Writing '{new_string}' at {hex(address)}")
         with open(f'/proc/{pid}/mem', 'rb+') as mem_file:
             for addr in occurrences:
                 mem_file.seek(addr)
