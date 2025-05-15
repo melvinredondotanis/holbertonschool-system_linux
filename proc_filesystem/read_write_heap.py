@@ -11,7 +11,7 @@ def read_write_heap(pid, target_string, new_string):
 
     This function accesses /proc/<pid>/maps to locate the heap segment
     of a process, then reads the heap content from /proc/<pid>/mem.
-    It searches for all occurrences of the target string and replaces 
+    It searches for all occurrences of the target string and replaces
     them with the new string (padding with null bytes if necessary).
 
     Args:
