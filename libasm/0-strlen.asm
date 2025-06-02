@@ -1,3 +1,5 @@
+bits 64
+
 section .text
 	global asm_strlen	; Export the function
 
