@@ -1,7 +1,7 @@
 bits 64
 
 section .text
-    global asm_strcasecmp
+    global asm_strncasecmp
 
 asm_strncasecmp:
     push rbp           ; save base pointer before mov

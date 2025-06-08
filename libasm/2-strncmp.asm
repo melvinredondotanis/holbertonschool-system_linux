@@ -1,7 +1,7 @@
 bits 64
 
 section .text
-	global asm_strcmp
+	global asm_strncmp
 
 asm_strncmp:
 	; Configure stack frame
