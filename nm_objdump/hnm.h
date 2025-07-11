@@ -46,6 +46,6 @@ typedef struct Elf
 
 } elf_t;
 
-int displays_symbols(char *filename, const char *program_name);
+int displays_symbols(char *filename, char *program_name);
 
 #endif /* HNM_H */
