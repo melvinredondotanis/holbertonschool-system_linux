@@ -20,6 +20,8 @@
 #define ERR_NOT_MAGIC ERR_PREFIX \
 	"%s: File format not recognized\n"
 
+#define IS_32(x) ((x).e_ident[EI_CLASS] == ELFCLASS32)
+
 /**
  * struct Elf - stores 32/64 structs and other data
  * @e64: the 64 bit struct
