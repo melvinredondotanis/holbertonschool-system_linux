@@ -65,21 +65,24 @@ int displays_symbols(char *filename, char *program_name)
 	memset(&elf_header, 0, sizeof(elf_header));
 	r = read(fd, &elf_header.e64, sizeof(elf_header.e64));
 	if (r != sizeof(elf_header.e64) || !check_elf((char *)&elf_header.e64))
-		fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
-	else
 	{
-		if (IS_32(elf_header.e64))
+		fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
+		goto cleanup;
+	}
+	if (IS_32(elf_header.e64))
+	{
+		lseek(fd, 0, SEEK_SET);
+		r = read(fd, &elf_header.e32, sizeof(elf_header.e32));
+		if (r != sizeof(elf_header.e32) || !check_elf((char *)&elf_header.e32))
 		{
-			lseek(fd, 0, SEEK_SET);
-			r = read(fd, &elf_header.e32, sizeof(elf_header.e32));
-			if (r != sizeof(elf_header.e32) || !check_elf((char *)&elf_header.e32))
-				fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
+			fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
+			goto cleanup;
 		}
 	}
 
 	/* to be continued */
 
-
+cleanup:
 	free_them(elf_header);
 	close(fd);
 	return (status);
