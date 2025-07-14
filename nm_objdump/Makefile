@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -pedantic -std=c89
 NAME = hnm
-SOURCES = hnm.c displays_symbols.c
+SOURCES = hnm.c displays_symbols.c swaps.c sections.c symbols.c
 
 $(NAME): $(SOURCES) hnm.h
 	$(CC) $(CFLAGS) -o $(NAME) $(SOURCES)

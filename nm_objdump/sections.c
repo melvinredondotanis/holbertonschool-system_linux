@@ -1,0 +1,62 @@
+#include "hnm.h"
+
+/**
+ * read_section_headers - reads section headers from ELF file
+ * @fd: file descriptor
+ * @elf_header: ELF header structure
+ * Return: 0 on success, -1 on error
+ */
+int read_section_headers(int fd, elf_t *elf_header)
+{
+	size_t size = sizeof(Elf64_Shdr) * elf_header->e64.e_shnum;
+
+	if (IS_32(elf_header->e64))
+	{
+		size_t size = sizeof(Elf32_Shdr) * elf_header->e32.e_shnum;
+
+		elf_header->s32 = malloc(size);
+		if (!elf_header->s32)
+			return (-1);
+
+		lseek(fd, elf_header->e32.e_shoff, SEEK_SET);
+		if (read(fd, elf_header->s32, size) != (ssize_t)size)
+		{
+			free(elf_header->s32);
+			elf_header->s32 = NULL;
+			return (-1);
+		}
+	}
+
+	elf_header->s64 = malloc(size);
+	if (!elf_header->s64)
+		return (-1);
+
+	lseek(fd, elf_header->e64.e_shoff, SEEK_SET);
+	if (read(fd, elf_header->s64, size) != (ssize_t)size)
+	{
+		free(elf_header->s64);
+		elf_header->s64 = NULL;
+		return (-1);
+	}
+	return (0);
+}
+
+/**
+ * find_symtab_section - finds the symbol table section
+ * @elf_header: ELF header structure
+ * Return: index of symbol table section, -1 if not found
+ */
+int find_symtab_section(elf_t *elf_header)
+{
+	int i;
+
+	if (IS_32(elf_header->e64))
+		for (i = 0; i < elf_header->e32.e_shnum; i++)
+			if (elf_header->s32[i].sh_type == SHT_SYMTAB)
+				return (i);
+
+	for (i = 0; i < elf_header->e64.e_shnum; i++)
+		if (elf_header->s64[i].sh_type == SHT_SYMTAB)
+			return (i);
+	return (-1);
+}

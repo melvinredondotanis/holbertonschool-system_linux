@@ -10,6 +10,9 @@ static void free_them(elf_t elf_header)
 	free(elf_header.s64);
 	free(elf_header.p32);
 	free(elf_header.p64);
+	free(elf_header.y32);
+	free(elf_header.y64);
+	free(elf_header.strtab);
 }
 
 /**
@@ -47,6 +50,40 @@ static int open_file(char *filename, char *program_name)
 }
 
 /**
+ * verify_elf_header - verifies ELF header and reads appropriate header
+ * @fd: file descriptor
+ * @elf_header: ELF header structure
+ * @program_name: name of the program (for error messages)
+ * @filename: name of the file being read
+ * Return: 0 on success, -1 on error
+ */
+static int verify_elf_header(int fd, elf_t *elf_header, char *program_name,
+							char *filename)
+{
+	size_t r;
+
+	r = read(fd, &elf_header->e64, sizeof(elf_header->e64));
+	if (r != sizeof(elf_header->e64) || !check_elf((char *)&elf_header->e64))
+	{
+		fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
+		return (-1);
+	}
+
+	if (IS_32(elf_header->e64))
+	{
+		lseek(fd, 0, SEEK_SET);
+		r = read(fd, &elf_header->e32, sizeof(elf_header->e32));
+		if (r != sizeof(elf_header->e32) || !check_elf((char *)&elf_header->e32))
+		{
+			fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
+			return (-1);
+		}
+	}
+
+	return (0);
+}
+
+/**
  * displays_symbols - displays symbols from an ELF file
  * @filename: name of the file to read
  * @program_name: name of the program (for error messages)
@@ -55,32 +92,34 @@ static int open_file(char *filename, char *program_name)
 int displays_symbols(char *filename, char *program_name)
 {
 	int status = EXIT_FAILURE, fd;
-	size_t r;
+	int symtab_idx;
 	elf_t elf_header;
 
 	fd = open_file(filename, program_name);
 	if (fd == -1)
-		return (EXIT_FAILURE);
+		return (status);
 
 	memset(&elf_header, 0, sizeof(elf_header));
-	r = read(fd, &elf_header.e64, sizeof(elf_header.e64));
-	if (r != sizeof(elf_header.e64) || !check_elf((char *)&elf_header.e64))
+
+	if (verify_elf_header(fd, &elf_header, program_name, filename) == -1)
+		goto cleanup;
+
+	if (read_section_headers(fd, &elf_header) == -1)
+		goto cleanup;
+
+	symtab_idx = find_symtab_section(&elf_header);
+	if (symtab_idx == -1)
 	{
-		fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
+		status = EXIT_SUCCESS;
 		goto cleanup;
 	}
-	if (IS_32(elf_header.e64))
-	{
-		lseek(fd, 0, SEEK_SET);
-		r = read(fd, &elf_header.e32, sizeof(elf_header.e32));
-		if (r != sizeof(elf_header.e32) || !check_elf((char *)&elf_header.e32))
-		{
-			fprintf(stderr, ERR_NOT_MAGIC, program_name, filename);
-			goto cleanup;
-		}
-	}
 
-	/* to be continued */
+	if (IS_32(elf_header.e64))
+		print_symbols_32(fd, &elf_header, symtab_idx);
+	else
+		print_symbols_64(fd, &elf_header, symtab_idx);
+
+	status = EXIT_SUCCESS;
 
 cleanup:
 	free_them(elf_header);
