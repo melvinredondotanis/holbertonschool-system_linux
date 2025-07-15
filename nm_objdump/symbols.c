@@ -10,11 +10,19 @@ char get_symbol_type_64(Elf64_Sym *sym, elf_t *elf_header)
 {
 	unsigned char bind = ELF64_ST_BIND(sym->st_info);
 
+	if (bind == STB_WEAK)
+	{
+		if (sym->st_shndx == SHN_UNDEF)
+			return ('w');
+		else
+			return ('W');
+	}
+
 	if (sym->st_shndx == SHN_UNDEF)
 		return ('U');
 
-	if (bind == STB_WEAK)
-		return (sym->st_shndx == SHN_UNDEF ? 'w' : 'W');
+	if (sym->st_shndx == SHN_ABS)
+		return (bind == STB_LOCAL ? 'a' : 'A');
 
 	if (sym->st_shndx < elf_header->e64.e_shnum)
 	{
@@ -30,6 +38,8 @@ char get_symbol_type_64(Elf64_Sym *sym, elf_t *elf_header)
 		}
 		if (shdr->sh_type == SHT_NOBITS)
 			return (bind == STB_LOCAL ? 'b' : 'B');
+		if (shdr->sh_type == SHT_DYNAMIC)
+			return (bind == STB_LOCAL ? 'd' : 'D');
 	}
 
 	return ('?');
@@ -45,11 +55,19 @@ char get_symbol_type_32(Elf32_Sym *sym, elf_t *elf_header)
 {
 	unsigned char bind = ELF32_ST_BIND(sym->st_info);
 
+	if (bind == STB_WEAK)
+	{
+		if (sym->st_shndx == SHN_UNDEF)
+			return ('w');
+		else
+			return ('W');
+	}
+
 	if (sym->st_shndx == SHN_UNDEF)
 		return ('U');
 
-	if (bind == STB_WEAK)
-		return (sym->st_shndx == SHN_UNDEF ? 'w' : 'W');
+	if (sym->st_shndx == SHN_ABS)
+		return (bind == STB_LOCAL ? 'a' : 'A');
 
 	if (sym->st_shndx < elf_header->e32.e_shnum)
 	{
@@ -107,7 +125,7 @@ void print_symbols_32(int fd, elf_t *elf_header, int symtab_idx)
 		Elf32_Sym *sym = &elf_header->y32[i];
 		char type;
 
-		if (sym->st_name == 0)
+		if (sym->st_name == 0 || ELF32_ST_TYPE(sym->st_info) == STT_FILE)
 			continue;
 
 		type = get_symbol_type_32(sym, elf_header);
@@ -157,7 +175,7 @@ void print_symbols_64(int fd, elf_t *elf_header, int symtab_idx)
 		Elf64_Sym *sym = &elf_header->y64[i];
 		char type;
 
-		if (sym->st_name == 0)
+		if (sym->st_name == 0 || ELF64_ST_TYPE(sym->st_info) == STT_FILE)
 			continue;
 
 		type = get_symbol_type_64(sym, elf_header);
