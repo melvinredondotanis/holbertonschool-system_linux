@@ -124,15 +124,19 @@ void print_symbols_32(int fd, elf_t *elf_header, int symtab_idx)
 	{
 		Elf32_Sym *sym = &elf_header->y32[i];
 		char type;
+		uint32_t value = sym->st_value;
+
+		if (IS_BIG_ENDIAN(elf_header->e64))
+			value = swap_32(value);
 
 		if (sym->st_name == 0 || ELF32_ST_TYPE(sym->st_info) == STT_FILE)
 			continue;
 
 		type = get_symbol_type_32(sym, elf_header);
-		if (sym->st_value == 0)
+		if (value == 0)
 			printf("         %c %s\n", type, &strtab[sym->st_name]);
 		else
-			printf("%08x %c %s\n", sym->st_value, type, &strtab[sym->st_name]);
+			printf("%08x %c %s\n", value, type, &strtab[sym->st_name]);
 	}
 
 	free(strtab);

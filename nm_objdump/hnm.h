@@ -13,15 +13,18 @@
 #define USAGE "Usage: hnm [objfile ...]\n"
 
 #define ERR_PREFIX "%s: "
-#define ERR_NO_ENTRY ERR_PREFIX \
+#define ERR_NO_ENTRY \
+	ERR_PREFIX       \
 	"'%s': No such file\n"
-#define ERR_NO_ACCESS ERR_PREFIX \
+#define ERR_NO_ACCESS \
+	ERR_PREFIX        \
 	"%s: Permission denied\n"
-#define ERR_NOT_MAGIC ERR_PREFIX \
+#define ERR_NOT_MAGIC \
+	ERR_PREFIX        \
 	"%s: File format not recognized\n"
 
 #define IS_32(x) ((x).e_ident[EI_CLASS] == ELFCLASS32)
-#define IS_BIG_ENDIAN(x) ((x).e_indent[EI_DATA] == ELFDATA2MSB)
+#define IS_BIG_ENDIAN(x) ((x).e_ident[EI_DATA] == ELFDATA2MSB)
 
 /**
  * struct Elf - stores 32/64 structs and other data
@@ -37,15 +40,15 @@
  */
 typedef struct Elf
 {
-	Elf64_Ehdr	e64;
-	Elf32_Ehdr	e32;
-	Elf64_Shdr	*s64;
-	Elf32_Shdr	*s32;
-	Elf64_Phdr	*p64;
-	Elf32_Phdr	*p32;
-	Elf64_Sym	*y64;
-	Elf32_Sym	*y32;
-	char		*strtab;
+	Elf64_Ehdr e64;
+	Elf32_Ehdr e32;
+	Elf64_Shdr *s64;
+	Elf32_Shdr *s32;
+	Elf64_Phdr *p64;
+	Elf32_Phdr *p32;
+	Elf64_Sym *y64;
+	Elf32_Sym *y32;
+	char *strtab;
 } elf_t;
 
 int read_section_headers(int fd, elf_t *elf_header);
