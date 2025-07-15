@@ -128,7 +128,8 @@ void print_symbols_32(int fd, elf_t *elf_header, int symtab_idx)
 			elf_header->y32[i].st_name = swap_32(elf_header->y32[i].st_name);
 			elf_header->y32[i].st_value = swap_32(elf_header->y32[i].st_value);
 			elf_header->y32[i].st_size = swap_32(elf_header->y32[i].st_size);
-			elf_header->y32[i].st_shndx = swap_32(elf_header->y32[i].st_shndx) & 0xFFFF;
+			/* Correction: st_shndx est un uint16_t, pas uint32_t */
+			elf_header->y32[i].st_shndx = (swap_32(elf_header->y32[i].st_shndx) >> 16) & 0xFFFF;
 		}
 	}
 
