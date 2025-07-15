@@ -120,18 +120,14 @@ void print_symbols_32(int fd, elf_t *elf_header, int symtab_idx)
 	lseek(fd, elf_header->s32[symtab_idx].sh_offset, SEEK_SET);
 	read(fd, elf_header->y32, elf_header->s32[symtab_idx].sh_size);
 
-	/* Swap symbol fields if big endian */
 	if (IS_BIG_ENDIAN(elf_header->e64))
-	{
 		for (i = 0; i < num_symbols; i++)
 		{
 			elf_header->y32[i].st_name = swap_32(elf_header->y32[i].st_name);
 			elf_header->y32[i].st_value = swap_32(elf_header->y32[i].st_value);
 			elf_header->y32[i].st_size = swap_32(elf_header->y32[i].st_size);
-			/* Correction: st_shndx est un uint16_t, pas uint32_t */
 			elf_header->y32[i].st_shndx = (swap_32(elf_header->y32[i].st_shndx) >> 16) & 0xFFFF;
 		}
-	}
 
 	for (i = 0; i < num_symbols; i++)
 	{
@@ -142,7 +138,9 @@ void print_symbols_32(int fd, elf_t *elf_header, int symtab_idx)
 			continue;
 
 		type = get_symbol_type_32(sym, elf_header);
-		if (sym->st_value == 0)
+		if (sym->st_shndx == SHN_UNDEF || type == 'U')
+			printf("         %c %s\n", type, &strtab[sym->st_name]);
+		else if (sym->st_value == 0)
 			printf("         %c %s\n", type, &strtab[sym->st_name]);
 		else
 			printf("%08x %c %s\n", sym->st_value, type, &strtab[sym->st_name]);
