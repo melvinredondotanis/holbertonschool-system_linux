@@ -3,21 +3,24 @@
 #include <Python.h>
 
 /**
- * print_python_string - ...
- * @p: ...
+ * print_python_string - func
+ * @p: PyObject
  */
 void print_python_string(PyObject *p)
 {
-	wprintf(L"[.] string object info\n");
-	if (!p || p->ob_type != &PyUnicode_Type)
+	char *ascii = "compact ascii",
+		 *ucode = "compact unicode object";
+	PyASCIIObject *str_ob = NULL;
+
+	setbuf(stdout, NULL);
+	printf("[.] string object info\n");
+	if (!PyUnicode_Check(p))
 	{
-		wprintf(L"  [ERROR] Invalid String Object\n");
+		printf("  [ERROR] Invalid String Object\n");
 		return;
 	}
-	if (((PyASCIIObject *)p)->state.ascii)
-		wprintf(L"  type: compact ascii\n");
-	else
-		wprintf(L"  type: compact unicode object\n");
-	wprintf(L"  length: %ld\n", ((PyASCIIObject *)p)->length);
-	wprintf(L"  value: %ls\n", PyUnicode_AS_UNICODE(p));
+	str_ob = (PyASCIIObject *)p;
+	printf("  type: %s\n", ((str_ob->state.ascii) ? ascii : ucode));
+	printf("  length: %lu\n", str_ob->length);
+	printf("  value: %s\n", PyUnicode_AsUTF8(p));
 }
