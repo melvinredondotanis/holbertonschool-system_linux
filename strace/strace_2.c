@@ -1,93 +1,100 @@
 #include "strace.h"
 
-#define ENOSYS_ERROR -38
+void trace_child(char **av, char **envp);
+void trace_parent(pid_t child_pid);
+int await_syscall(pid_t child_pid);
 
 /**
-* createTracedProcess - Crea y configura el proceso hijo para la traza
-* @argv: Argument vector
-*
-* Return: El PID del proceso hijo
-*/
-pid_t createTracedProcess(char **argv)
+ * main - entry point
+ * @ac: argument count
+ * @av: argument vector
+ * @envp: environ
+ * Return: EXIT_SUCCESS or error.
+ */
+int main(int ac, char **av, char **envp)
 {
 	pid_t child_pid;
 
+	if (ac < 2)
+	{
+		printf("Usage: %s command [args...]\n", av[0]);
+		return (EXIT_FAILURE);
+	}
+	setbuf(stdout, NULL);
 	child_pid = fork();
-
-	if (child_pid < 0)
+	if (child_pid == -1)
 	{
-		perror("fork");
-		exit(EXIT_FAILURE);
+		dprintf(STDERR_FILENO, "Fork failed: %d\n", errno);
+		exit(-1);
 	}
-	else if (child_pid == 0)
-	{
-		ptrace(PTRACE_TRACEME, 0, 0, 0);
-		raise(SIGSTOP);
-		execvp(argv[0], argv);
-		perror("execvp");
-		exit(EXIT_FAILURE);
-	}
-
-	return (child_pid);
+	else if (!child_pid)
+		trace_child(av, envp);
+	else
+		trace_parent(child_pid);
+	return (0);
 }
 
 /**
-* traceSyscalls - Realiza la traza de las llamadas al sistema
-* @child_pid: PID del proceso hijo
-*/
-void traceSyscalls(pid_t child_pid)
+ * trace_child - traces child process
+ * @av: argument vector for execve
+ * @envp: environ for execve
+ */
+void trace_child(char **av, char **envp)
 {
-	int status, syscall_number, print_syscall_name, call_count = 0;
-	struct user_regs_struct user_registers;
+	ptrace(PTRACE_TRACEME, 0, 0, 0);
+	kill(getpid(), SIGSTOP);
+	if (execve(av[1], av + 1, envp) == -1)
+	{
+		dprintf(STDERR_FILENO, "Exec failed: %d\n", errno);
+		exit(-1);
+	}
+}
+
+/**
+ * trace_parent - calls made by tracing parent
+ * @child_pid: pid of child to trace
+ */
+void trace_parent(pid_t child_pid)
+{
+	int status;
+	struct user_regs_struct uregs;
 
 	waitpid(child_pid, &status, 0);
-	ptrace(PTRACE_SYSCALL, child_pid, 0, 0);
-
-	for (print_syscall_name = 0; !WIFEXITED(status); print_syscall_name ^= 1)
+	ptrace(PTRACE_SETOPTIONS, child_pid, 0, PTRACE_O_TRACESYSGOOD);
+	while (1)
 	{
-		ptrace(PTRACE_GETREGS, child_pid, 0, &user_registers);
-
-		if (!print_syscall_name && call_count)
-		{
-			syscall_number = user_registers.orig_rax;
-			printf("%s", syscalls_64[syscall_number].name);
-		}
-
-		if (print_syscall_name && (long)user_registers.rax != ENOSYS_ERROR
-									&& call_count)
-			printf(" = %s%lx\n", user_registers.rax ? "0x" : "",
-					(long)user_registers.rax);
-
-		ptrace(PTRACE_SYSCALL, child_pid, 0, 0);
-		waitpid(child_pid, &status, 0);
-		call_count = 1;
+		if (await_syscall(child_pid))
+			break;
+		memset(&uregs, 0, sizeof(uregs));
+		ptrace(PTRACE_GETREGS, child_pid, 0, &uregs);
+		printf("%s", syscalls_64_g[uregs.orig_rax].name);
+		if (await_syscall(child_pid))
+			break;
+		memset(&uregs, 0, sizeof(uregs));
+		ptrace(PTRACE_GETREGS, child_pid, 0, &uregs);
+		printf(" = %#lx\n", (long)uregs.rax);
 	}
 }
 
 /**
-* main - Entry point
-* @argc: Argument count
-* @argv: Argument vector
-*
-* Return: EXIT_SUCCESS or EXIT_FAILURE
-*/
-int main(int argc, char **argv)
+ * await_syscall - waits for a syscall
+ * @child_pid: pid of process to await
+ * Return: 0 if child stopped, 1 if exited
+ */
+int await_syscall(pid_t child_pid)
 {
-	pid_t child_pid;
+	int status;
 
-	/* Disable buffering of stdout */
-	setvbuf(stdout, NULL, _IONBF, 0);
-
-	if (argc < 2)
+	while (1)
 	{
-		fprintf(stderr, "Usage: %s command [args...]\n", argv[0]);
-		exit(EXIT_FAILURE);
+		ptrace(PTRACE_SYSCALL, child_pid, 0, 0);
+		waitpid(child_pid, &status, 0);
+		if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80)
+			return (0);
+		if (WIFEXITED(status))
+		{
+			printf(" = ?\n");
+			return (1);
+		}
 	}
-
-	child_pid = createTracedProcess(argv + 1);
-	traceSyscalls(child_pid);
-
-	printf(" = ?\n");
-	return (EXIT_SUCCESS);
 }
-
