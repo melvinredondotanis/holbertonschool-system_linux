@@ -1,47 +1,47 @@
 #include "strace.h"
 
 /**
- * main - Entry point for the strace program
- * @argc: argument count
- * @argv: argument vector
- * Return: 0 on success, 1 on error
- */
+* main - Entry point
+* @argc: The number of arguments
+* @argv: The arguments
+*
+* Return: 0 on success, otherwise 1
+*/
 int main(int argc, char **argv)
 {
-	if (argc < 2)
+	pid_t child_pid;
+	int status, syscall_number, print_next_syscall;
+	struct user_regs_struct user_registers;
+
+	setvbuf(stdout, NULL, _IONBF, 0);
+
+	child_pid = fork();
+
+	if (child_pid < 0)
+		exit(EXIT_FAILURE);
+	else if (child_pid == 0)
 	{
-		fprintf(stderr, "Usage: %s command [args...]\n", argv[0]);
-		return (2);
+		ptrace(PTRACE_TRACEME, 0, 0, 0);
+		raise(SIGSTOP);
+		argv[argc] = NULL;
+		execvp(argv[1], argv + 1);
 	}
-
-	pid_t child = fork();
-
-	if (child == 0)
+	else
 	{
-		ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-		execv(argv[1], &argv[1]);
-		perror("execv");
-		exit(1);
-	}
-
-	int status, in_syscall = 0;
-	struct user_regs_struct regs;
-
-	waitpid(child, &status, 0);
-	while (1)
-	{
-		ptrace(PTRACE_SYSCALL, child, NULL, NULL);
-		waitpid(child, &status, 0);
-		if (WIFEXITED(status))
-			break;
-
-		if (!in_syscall)
+		wait(&status);
+		ptrace(PTRACE_SYSCALL, child_pid, 0, 0);
+		for (print_next_syscall = 0; !WIFEXITED(status); print_next_syscall ^= 1)
 		{
-			ptrace(PTRACE_GETREGS, child, NULL, &regs);
-			printf("%lld\n", (long long)regs.orig_rax);
+			wait(&status);
+			ptrace(PTRACE_GETREGS, child_pid, 0, &user_registers);
+			if (print_next_syscall)
+			{
+				syscall_number = user_registers.orig_rax;
+				printf("%d\n", syscall_number);
+			}
+
+			ptrace(PTRACE_SYSCALL, child_pid, 0, 0);
 		}
-		else
-			in_syscall = 0;
 	}
 	return (0);
 }
