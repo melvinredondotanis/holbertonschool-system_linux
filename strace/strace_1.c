@@ -10,6 +10,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Add the following extern and macro if not already defined elsewhere */
+extern struct syscall_entry syscalls_64_g[];
+#define SYSCALLS_64_SIZE  332  /* Replace 332 with the actual size of syscalls_64_g if different */
+
 void trace_child(char **av, char **envp);
 void trace_parent(pid_t child_pid);
 int await_syscall(pid_t child_pid);
@@ -65,7 +69,7 @@ void trace_parent(pid_t child_pid)
 {
 	int status;
 	struct user_regs_struct uregs;
-	int entering = 1; /* 1 = prochain stop est entrée */
+	int entering = 1;
 
 	if (waitpid(child_pid, &status, 0) == -1)
 		return;
@@ -82,9 +86,14 @@ void trace_parent(pid_t child_pid)
 			break;
 
 		if (entering)
-			printf("%s\n", syscalls_64_g[uregs.orig_rax].name);
-
-		entering = !entering; /* alterne entrée / sortie */
+		{
+			unsigned long nr = uregs.orig_rax;
+			if (nr < SYSCALLS_64_SIZE)
+				printf("%s\n", syscalls_64_g[nr].name);
+			else
+				printf("syscall_%lu\n", nr);
+		}
+		entering = !entering;
 	}
 	printf("\n");
 }
