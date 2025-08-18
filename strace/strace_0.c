@@ -1,4 +1,14 @@
 #include "strace.h"
+#include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/user.h>
+#include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 void trace_child(char **av, char **envp);
 void trace_parent(pid_t child_pid);
@@ -25,7 +35,7 @@ int main(int ac, char **av, char **envp)
 	if (child_pid == -1)
 	{
 		dprintf(STDERR_FILENO, "Fork failed: %d\n", errno);
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	else if (!child_pid)
 		trace_child(av, envp);
@@ -41,12 +51,16 @@ int main(int ac, char **av, char **envp)
  */
 void trace_child(char **av, char **envp)
 {
-	ptrace(PTRACE_TRACEME, 0, 0, 0);
+	if (ptrace(PTRACE_TRACEME, 0, 0, 0) == -1)
+	{
+		dprintf(STDERR_FILENO, "PTRACE_TRACEME failed: %d\n", errno);
+		_exit(1);
+	}
 	kill(getpid(), SIGSTOP);
 	if (execve(av[1], av + 1, envp) == -1)
 	{
 		dprintf(STDERR_FILENO, "Exec failed: %d\n", errno);
-		exit(-1);
+		_exit(1);
 	}
 }
 
@@ -59,15 +73,17 @@ void trace_parent(pid_t child_pid)
 	int status;
 	struct user_regs_struct uregs;
 
-	waitpid(child_pid, &status, 0);
+	if (waitpid(child_pid, &status, 0) == -1)
+		return;
 	ptrace(PTRACE_SETOPTIONS, child_pid, 0, PTRACE_O_TRACESYSGOOD);
 	while (1)
 	{
 		if (await_syscall(child_pid))
 			break;
 		memset(&uregs, 0, sizeof(uregs));
-		ptrace(PTRACE_GETREGS, child_pid, 0, &uregs);
-		printf("%lu\n", (long)uregs.orig_rax);
+		if (ptrace(PTRACE_GETREGS, child_pid, 0, &uregs) == -1)
+			break;
+		printf("%ld\n", (long)uregs.orig_rax);
 		if (await_syscall(child_pid))
 			break;
 	}
@@ -84,11 +100,13 @@ int await_syscall(pid_t child_pid)
 
 	while (1)
 	{
-		ptrace(PTRACE_SYSCALL, child_pid, 0, 0);
-		waitpid(child_pid, &status, 0);
-		if (WIFSTOPPED(status) && WSTOPSIG(status) & 0x80)
-			return (0);
-		if (WIFEXITED(status))
-			return (1);
+		if (ptrace(PTRACE_SYSCALL, child_pid, 0, 0) == -1)
+			return 1;
+		if (waitpid(child_pid, &status, 0) == -1)
+			return 1;
+		if (WIFSTOPPED(status) && (WSTOPSIG(status) & 0x80))
+			return 0;
+		if (WIFEXITED(status) || WIFSIGNALED(status))
+			return 1;
 	}
 }
