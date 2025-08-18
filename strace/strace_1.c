@@ -65,18 +65,26 @@ void trace_parent(pid_t child_pid)
 {
 	int status;
 	struct user_regs_struct uregs;
+	int entering = 1; /* 1 = prochain stop est entrée */
 
 	if (waitpid(child_pid, &status, 0) == -1)
 		return;
-	ptrace(PTRACE_SETOPTIONS, child_pid, 0, PTRACE_O_TRACESYSGOOD);
+	if (ptrace(PTRACE_SETOPTIONS, child_pid, 0, PTRACE_O_TRACESYSGOOD) == -1)
+		return;
+
 	while (1)
 	{
 		if (await_syscall(child_pid))
 			break;
+
 		memset(&uregs, 0, sizeof(uregs));
 		if (ptrace(PTRACE_GETREGS, child_pid, 0, &uregs) == -1)
 			break;
-		printf("%s\n", syscalls_64_g[uregs.orig_rax].name);
+
+		if (entering)
+			printf("%s\n", syscalls_64_g[uregs.orig_rax].name);
+
+		entering = !entering; /* alterne entrée / sortie */
 	}
 	printf("\n");
 }
