@@ -10,6 +10,9 @@
  */
 void *thread_entry(void *arg)
 {
+	if (!arg)
+		pthread_exit(&arg);
+
 	printf("%s\n", (char *) arg);
-	return (NULL);
+	pthread_exit(NULL);
 }
